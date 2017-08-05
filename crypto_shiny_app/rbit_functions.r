@@ -7,6 +7,7 @@ market.api.query.hs <- function (url, key, secret, req = list(),
 {
   require(RJSONIO)
   require(RCurl)
+  require(Rbitcoin)
   
   fun_name <- "market.api.query.poloniex"
   if (length(req) > 0 | (!missing(key) & !missing(secret))) {

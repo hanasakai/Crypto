@@ -11,7 +11,7 @@
 
 setwd("E:\\Career\\PersonalProjects\\RBitcoin")
 
-source("code/rbit_functions.r")
+source("rbit_functions.r")
 
 options(digits=20)
 
@@ -42,3 +42,8 @@ print(p1$pol_sum)
 print("The Independent Reserve price / Poloniex price is:")
 print(paste0(as.character(round((i1$ind_sum$avg_cost_aud / p1$pol_sum$avg_cost_aud - 1) * 100, digits = 2)), "%" ))
 
+################################################################################
+################################################################################
+
+library(rsconnect)
+rsconnect::deployApp('Crypto/crypto_shiny_app')
