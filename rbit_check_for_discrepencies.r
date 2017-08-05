@@ -9,9 +9,9 @@
 
 # ENVIRON SETUP -----------------------------------------------------------
 
-setwd("E:\\Career\\PersonalProjects\\RBitcoin")
+setwd("E:\\Career\\PersonalProjects\\RBitcoin\\Crypto")
 
-source("rbit_functions.r")
+source("crypto_shiny_app/rbit_functions.r")
 
 options(digits=20)
 
@@ -19,22 +19,24 @@ options(digits=20)
 # POLONIEX ----------------------------------------------------------------
 
 # Enter the number of Bitcoins that you want to buy and get avg USD cost on Poloniex
-p1 <- fPoloniexBuy(totvol=20)
+p1 <- fPoloniexBuy(totvol=20, coin2buy = "xbt")
 
 # Get the USD to AUD exchange rate
-# http://api.fixer.io/latest?base=USD&symbols=AUD
-USD_AUD_rate <- fromJSON(rawToChar(getURLContent(url = "http://api.fixer.io/latest?base=USD&symbols=AUD",
+exch_url <- "http://api.fixer.io/latest?base=USD&symbols=AUD"
+AUD_USD_rate <- fromJSON(rawToChar(getURLContent(url = exch_url,
                                                  binary = TRUE)))
 
 # Convert USD to AUD and add it to the pol_sum table
-p1$pol_sum$avg_cost_aud <- p1$pol_sum$avg_cost * USD_AUD_rate$rates
+p1$pol_sum$avg_cost_aud <- p1$pol_sum$avg_cost_usd * AUD_USD_rate$rates
 
 p1$pol_sum
 
 ################################################################################
 # INDEPENDENT RESERVE -----------------------------------------------------
-
-i1 <- fIndResBuy(totvol = 20)
+# coin2buy:
+# xbt for bitcoin
+# eth for ethereum
+i1 <- fIndResBuy(totvol = 20, coin2buy = "xbt")
 
 print(i1$ind_sum)
 print(p1$pol_sum)
@@ -47,3 +49,5 @@ print(paste0(as.character(round((i1$ind_sum$avg_cost_aud / p1$pol_sum$avg_cost_a
 
 library(rsconnect)
 rsconnect::deployApp('Crypto/crypto_shiny_app')
+
+# https://hanasakai.shinyapps.io/shiny_app/

@@ -16,11 +16,11 @@ shinyServer(function(input, output) {
     
     # Get the USD to AUD exchange rate
     # http://api.fixer.io/latest?base=USD&symbols=AUD
-    USD_AUD_rate <- fromJSON(rawToChar(getURLContent(url = "http://api.fixer.io/latest?base=USD&symbols=AUD",
+    AUD_USD_rate <- fromJSON(rawToChar(getURLContent(url = "http://api.fixer.io/latest?base=USD&symbols=AUD",
                                                      binary = TRUE)))
     
     # Convert USD to AUD and add it to the pol_sum table
-    p1$pol_sum$avg_cost_aud <- p1$pol_sum$avg_cost * USD_AUD_rate$rates
+    p1$pol_sum$avg_cost_aud <- p1$pol_sum$avg_cost * AUD_USD_rate$rates
     
     p1$pol_sum
     
@@ -42,11 +42,11 @@ shinyServer(function(input, output) {
 
     # Get the USD to AUD exchange rate
     # http://api.fixer.io/latest?base=USD&symbols=AUD
-    USD_AUD_rate <- fromJSON(rawToChar(getURLContent(url = "http://api.fixer.io/latest?base=USD&symbols=AUD",
+    AUD_USD_rate <- fromJSON(rawToChar(getURLContent(url = "http://api.fixer.io/latest?base=USD&symbols=AUD",
                                                      binary = TRUE)))
 
     # Convert USD to AUD and add it to the pol_sum table
-    p1$pol_sum$avg_cost_aud <- p1$pol_sum$avg_cost * USD_AUD_rate$rates
+    p1$pol_sum$avg_cost_aud <- p1$pol_sum$avg_cost * AUD_USD_rate$rates
 
     i1 <- fIndResBuy(totvol = input$totvol)
 

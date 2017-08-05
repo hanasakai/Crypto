@@ -57,21 +57,30 @@ market.api.query.hs <- function (url, key, secret, req = list(),
 }
 
 ################################################################################
-# fPoloniexBuy ------------------------------------------------------------
+# fPoloniexBuy2 ------------------------------------------------------------
 # fPoloniexBuy - Use this function when you want to buy BTC with USD and it
 # will examine the sell orders on Poloniex and for what volumes
 # and calculate the avg price
 # totvol  - is the volume of bitcoins that you want to buy (that others are selling)
 # returns a list of two data.tables: pol_trans - the transactions
 # and pol_sum - the summary of the avg costs
+# coin2buy - specify the crypto coin that you wish to buy with usd
+# xbt for Bitcoin
+# eth for ethereum
 
-fPoloniexBuy <- function(totvol){
+fPoloniexBuy <- function(totvol, coin2buy){
   
   # vol is the volume of bitcoins that you want to buy (that others are selling)
   # totvol= 6
   
+  if(coin2buy=='xbt'){ pair = "USDT_BTC" }
+  
+  if(coin2buy=='eth'){ pair = "USDT_ETH" }
+  
   # First get the sell orders from poloniex
-  pol_orders <- market.api.query.hs(url="https://poloniex.com/public?command=returnOrderBook&currencyPair=USDT_BTC&depth=50")
+  api_url <- paste0("https://poloniex.com/public?command=returnOrderBook&currencyPair=", 
+                    pair, "&depth=50")
+  pol_orders <- market.api.query.hs(url=api_url)
   
   # Before we do anything, Is the market frozen?
   if(pol_orders$isFrozen==1){
@@ -139,10 +148,10 @@ fPoloniexBuy <- function(totvol){
     
     # Now calulate the avg buy price for this trade
     pol_sum <- pol_trans[, .(vol_bought = sum(vol_bought), 
-                             cost_bought = sum(price), 
+                             cost_bought_usd = sum(price), 
                              num_trans = max(ID))]
     
-    pol_sum[, avg_cost := cost_bought / vol_bought]
+    pol_sum[, avg_cost_usd := cost_bought_usd / vol_bought]
     
     return(list(pol_trans=pol_trans, pol_sum=pol_sum))
     
@@ -151,23 +160,27 @@ fPoloniexBuy <- function(totvol){
 } # end fPoloniexBuy function
 
 ################################################################################
-# fIndResBuy ------------------------------------------------------------
-# fIndResBuy - Use this function when you want to buy BTC with AUD and it
+# fIndResBuy2 ------------------------------------------------------------
+# fIndResBuy2 - Use this function when you want to buy BTC with AUD and it
 # will examine the sell orders on Independent Reserve and for what volumes
 # and calculate the avg price
 # totvol  - is the volume of bitcoins that you want to buy (that others are selling)
 # returns a list of two data.tables: pol_trans - the transactions
 # and pol_sum - the summary of the avg costs
+# coin2buy - this is the code of the coin that you want to buy with AUD
 
-fIndResBuy <- function(totvol){
+fIndResBuy <- function(totvol, coin2buy){
   
   # vol is the volume of bitcoins that you want to buy (that others are selling)
   # totvol= 6
   
   # First get the sell orders from poloniex
-  ind_orders <- market.api.query.hs(url="https://api.independentreserve.com/Public/GetOrderBook?primaryCurrencyCode=xbt&secondaryCurrencyCode=aud")
+  api_url <- paste0("https://api.independentreserve.com/Public/GetOrderBook?primaryCurrencyCode=", 
+                    coin2buy, 
+                    "&secondaryCurrencyCode=aud")
+  ind_orders <- market.api.query.hs(url=api_url)
   
-    
+  
   # Get number of SellOrders orders
   # ask_num <- length(ind_orders$SellOrders)
   
@@ -201,18 +214,19 @@ fIndResBuy <- function(totvol){
     if(i==1){
       ind_trans <- data.table(ID=i, 
                               ask_price_aud=ask_price, 
-                              vol_avail_btc=ask_vol, 
-                              vol_bought_btc=vol_buy, 
-                              vol_remain_btc=remvol)  
+                              vol_avail=ask_vol, 
+                              vol_bought=vol_buy, 
+                              vol_remain=remvol)
     } else {
       ind_trans <- rbind(ind_trans, 
                          data.table(ID=i, 
                                     ask_price_aud=ask_price, 
-                                    vol_avail_btc=ask_vol, 
-                                    vol_bought_btc=vol_buy, 
-                                    vol_remain_btc=remvol))
+                                    vol_avail=ask_vol, 
+                                    vol_bought=vol_buy, 
+                                    vol_remain=remvol))
       
     } # end if
+    
     
     i <- i+1
     
@@ -226,15 +240,25 @@ fIndResBuy <- function(totvol){
   } # end repeat
   
   # Calculate the price of each transaction in the trade
-  ind_trans[, price_aud := ask_price_aud * vol_bought_btc]
+  ind_trans[, price_aud := ask_price_aud * vol_bought]
   
   # Now calulate the avg buy price for this trade
-  ind_sum <- ind_trans[, .(vol_bought_btc = sum(vol_bought_btc), 
+  ind_sum <- ind_trans[, .(vol_bought = sum(vol_bought), 
                            cost_bought_aud = sum(price_aud), 
                            num_trans = max(ID))]
   
-  ind_sum[, avg_cost_aud := cost_bought_aud / vol_bought_btc]
+  ind_sum[, avg_cost_aud := cost_bought_aud / vol_bought]
   
+  # Rename the columns to be a little more descriptive
+  # Create a vector of column names for the table
+  colnames <- c("ID", "ask_price_aud", paste0("vol_avail_", coin2buy),
+                paste0("vol_bought_", coin2buy),
+                paste0("vol_remain_", coin2buy), 
+                "price_aud")
+
+
+  setnames(ind_trans, names(ind_trans), colnames)
+                
   return(list(ind_trans=ind_trans, ind_sum=ind_sum))
   
-} # end fIndResBuy function
+} # end fIndResBuy2 function
